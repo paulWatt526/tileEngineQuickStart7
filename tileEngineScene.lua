@@ -8,21 +8,21 @@ local scene = Composer.newScene()
 -- the model needed for your application.
 -- -----------------------------------------------------------------------------------
 local ENVIRONMENT = {
-    {2,2,2,2,2,1,1,1,1,1,2,2,2,2,2},
-    {2,2,2,2,2,1,0,0,0,1,2,2,2,2,2},
-    {2,2,2,2,2,1,0,0,0,1,2,2,2,2,2},
-    {2,2,2,2,2,1,0,0,0,1,2,2,2,2,2},
-    {2,2,2,2,2,1,0,0,0,1,2,2,2,2,2},
-    {1,1,1,1,1,1,0,0,0,1,1,1,1,1,1},
+    {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
     {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
     {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
     {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
-    {1,1,1,1,1,1,0,0,0,1,1,1,1,1,1},
-    {2,2,2,2,2,1,0,0,0,1,2,2,2,2,2},
-    {2,2,2,2,2,1,0,0,0,1,2,2,2,2,2},
-    {2,2,2,2,2,1,0,0,0,1,2,2,2,2,2},
-    {2,2,2,2,2,1,0,0,0,1,2,2,2,2,2},
-    {2,2,2,2,2,1,1,1,1,1,2,2,2,2,2},
+    {1,0,0,0,1,1,0,0,0,1,1,0,0,0,1},
+    {1,0,0,0,1,1,0,0,0,1,1,0,0,0,1},
+    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+    {1,0,0,0,1,1,0,0,0,1,1,0,0,0,1},
+    {1,0,0,0,1,1,0,0,0,1,1,0,0,0,1},
+    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+    {1,0,0,0,0,0,0,0,0,0,0,0,0,0,1},
+    {1,1,1,1,1,1,1,1,1,1,1,1,1,1,1},
 }
 
 local CAMERA_SPEED      = 4 / 1000          -- Camera speed, 4 tiles per second
@@ -48,6 +48,7 @@ local movingLightXPos                       -- Tracks the continous position of 
 local entityId                              -- Will track the ID of the entity
 local entityDirection                       -- Tracks the direction of the moving entity
 local entityLayer                           -- Reference to the entity layer
+local playerTokenId                         -- Will track the ID of the player token.
 
 -- -----------------------------------------------------------------------------------
 -- This will load in the example sprite sheet.  Replace this with the sprite
@@ -76,30 +77,28 @@ end
 local stateMachine = {}
 stateMachine.init = function()
     -- Set initial state
-    stateMachine.curState = 1
+    stateMachine.curState = 0
 
     -- Set the initial position and direction of the moving light
-    movingLightDirection = "left"
-    movingLightXPos = 14.5
+    movingLightDirection = "right"
+    movingLightXPos = 1.5
 
-    -- Add a light at the top part of the room.
-    topLightId = lightingModel.addLight({
-        row=5,column=8,r=1,g=1,b=0.7,intensity=0.75,radius=9
-    })
+    -- Set ambient lighting for state 0
+    lightingModel.setAmbientLight(1,1,1,0.75)
 end
 stateMachine.update = function(deltaTime)
     local xDelta = MOVING_LIGHT_SPEED * deltaTime
     if movingLightDirection == "right" then
         movingLightXPos = movingLightXPos + xDelta
-        if movingLightXPos > 14.5 then
+        if movingLightXPos > 13.5 then
             movingLightDirection = "left"
-            movingLightXPos = 14.5 - (movingLightXPos - 14.5)
+            movingLightXPos = 13.5 - (movingLightXPos - 13.5)
         end
     else
         movingLightXPos = movingLightXPos - xDelta
-        if movingLightXPos < 0.5 then
+        if movingLightXPos < 1.5 then
             movingLightDirection = "right"
-            movingLightXPos = 0.5 + (0.5 - movingLightXPos)
+            movingLightXPos = 1.5 + (1.5 - movingLightXPos)
         end
     end
     if movingLightId ~= nil then
@@ -113,16 +112,21 @@ end
 stateMachine.nextState = function()
     stateMachine.curState = stateMachine.curState + 1
     if stateMachine.curState > 5 then
-        stateMachine.curState = 1
+        stateMachine.curState = 0
+    end
+
+    if stateMachine.curState == 0 then
+        lightingModel.removeLight(movingLightId)
+        movingLightId = nil
+        lightingModel.setUseTransitioners(false)
+        lightingModel.setAmbientLight(1,1,1,0.75)
     end
 
     if stateMachine.curState == 1 then
-        lightingModel.removeLight(movingLightId)
-        movingLightId = nil
         topLightId = lightingModel.addLight({
             row=5,column=8,r=1,g=1,b=0.7,intensity=0.75,radius=9
         })
-        lightingModel.setUseTransitioners(false)
+        lightingModel.setAmbientLight(1,1,1,0.15)
     end
 
     if stateMachine.curState == 2 then
@@ -253,6 +257,7 @@ end
 local function onFrame(event)
     local camera = tileEngineViewControl.getCamera()
     local lightingModel = tileEngine.getActiveModule().lightingModel
+    local lineOfSightModel = tileEngine.getActiveModule().losModel
 
     if lastTime ~= 0 then
         -- Determine the amount of time that has passed since the last frame and
@@ -267,18 +272,21 @@ local function onFrame(event)
         local xDelta = CAMERA_SPEED * deltaTime
         if cameraDirection == "right" then
             curXPos = curXPos + xDelta
-            if curXPos > 14.5 then
+            if curXPos > 13.5 then
                 cameraDirection = "left"
-                curXPos = 14.5 - (curXPos - 14.5)
+                curXPos = 13.5 - (curXPos - 13.5)
             end
         else
             curXPos = curXPos - xDelta
-            if curXPos < 0.5 then
+            if curXPos < 1.5 then
                 cameraDirection = "right"
-                curXPos = 0.5 + (0.5 - curXPos)
+                curXPos = 1.5 + (1.5 - curXPos)
             end
         end
         camera.setLocation(curXPos, camera.getY())
+
+        -- Set the entity position
+        entityLayer.setEntityTilePosition(playerTokenId, camera.getY(), curXPos)
 
         -- Update the position of the entity
         local entityRow, entityCol = entityLayer.getEntityTilePosition(entityId)
@@ -304,19 +312,32 @@ local function onFrame(event)
         -- Update the lighting model passing the amount of time that has passed since
         -- the last frame.
         lightingModel.update(deltaTime)
+
+        -- Update the line of sight model passing the row and column for the current
+        -- point of view nad the amount of time that has passed
+        -- since the last frame.
+        lineOfSightModel.update(8, math.floor(curXPos + 0.5), deltaTime)
     else
         -- This is the first call to onFrame, so lastTime needs to be initialized.
         lastTime = event.time
 
         -- This is the initial position of the camera
-        camera.setLocation(0.5, 7.5)
+        camera.setLocation(1.5, 7.5)
 
         -- Set the initial position of the entity
         entityLayer.centerEntityOnTile(entityId, 3, 8)
 
+        -- Set the initial position of the player token
+        entityLayer.centerEntityOnTile(playerTokenId, 8, 2)
+
         -- Since a time delta cannot be calculated on the first frame, 1 is passed
         -- in here as a placeholder.
         lightingModel.update(1)
+
+        -- Set the initial position of the player to match the
+        -- position of the camera.  Pass in a time delta of 1 since this is
+        -- the first frame.
+        lineOfSightModel.update(8, 3, 1)
     end
 
     -- Render the tiles visible to the passed in camera.
@@ -326,6 +347,11 @@ local function onFrame(event)
     -- the lightingModel.update() function.  This call resets the change tracking
     -- and must be called after lightingModel.update().
     lightingModel.resetDirtyFlags()
+
+    -- The line of sight model also tracks changes to the player position.
+    -- It is necessary to reset the change tracking to provide a clean
+    -- slate for the next frame.
+    lineOfSightModel.resetDirtyFlags()
 end
 
 -- -----------------------------------------------------------------------------------
@@ -344,8 +370,8 @@ function scene:create( event )
         parentGroup=tileEngineLayer,
         tileSize=32,
         spriteResolver=spriteResolver,
-        compensateLightingForViewingPosition=false,
-        hideOutOfSightElements=false
+        compensateLightingForViewingPosition=true,
+        hideOutOfSightElements=true
     })
 
     -- The tile engine needs at least one Module.  It can support more than
@@ -357,8 +383,16 @@ function scene:create( event )
         isTransparent = isTileTransparent,
         isTileAffectedByAmbient = allTilesAffectedByAmbient,
         useTransitioners = false,
-        compensateLightingForViewingPosition = false
+        compensateLightingForViewingPosition = true
     })
+
+    -- An instance of LineOfSightModel is created for the module to
+    -- track which tiles are visible.
+    local lineOfSightModel = TileEngine.LineOfSightModel.new({
+        radius = 20,
+        isTransparent = isTileTransparent
+    })
+    lineOfSightModel.setTransitionTime(225)
 
     -- Instantiate the module.
     local module = TileEngine.Module.new({
@@ -366,7 +400,7 @@ function scene:create( event )
         rows=ROW_COUNT,
         columns=COLUMN_COUNT,
         lightingModel=lightingModel,
-        losModel=TileEngine.LineOfSightModel.ALL_VISIBLE
+        losModel=lineOfSightModel
     })
 
     -- Next, layers will be added to the Module...
@@ -396,6 +430,7 @@ function scene:create( event )
     })
     module.insertLayerAtIndex(entityLayer, 2, 0)
     entityId = entityLayer.addEntity("tiles_2")
+    playerTokenId = entityLayer.addEntity("tiles_3")
 
     -- Create extruded wall layers
     for i=1,WALL_LAYER_COUNT do
@@ -429,9 +464,6 @@ function scene:create( event )
     })
 
     stateMachine.init()
-
-    -- Finally, set the ambient light to white light with medium-high intensity.
-    lightingModel.setAmbientLight(1,1,1,0.15)
 end
 
 
