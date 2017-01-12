@@ -315,14 +315,14 @@ local function onFrame(event)
         -- Update the state machine
         stateMachine.update(deltaTime)
 
-        -- Update the lighting model passing the amount of time that has passed since
-        -- the last frame.
-        lightingModel.update(deltaTime)
-
         -- Update the line of sight model passing the row and column for the current
         -- point of view nad the amount of time that has passed
         -- since the last frame.
         lineOfSightModel.update(8, math.floor(curXPos + 0.5), deltaTime)
+
+        -- Update the lighting model passing the amount of time that has passed since
+        -- the last frame.
+        lightingModel.update(deltaTime)
     else
         -- This is the first call to onFrame, so lastTime needs to be initialized.
         lastTime = event.time
@@ -336,14 +336,14 @@ local function onFrame(event)
         -- Set the initial position of the player token
         entityLayer.centerEntityOnTile(playerTokenId, 8, 2)
 
-        -- Since a time delta cannot be calculated on the first frame, 1 is passed
-        -- in here as a placeholder.
-        lightingModel.update(1)
-
         -- Set the initial position of the player to match the
         -- position of the camera.  Pass in a time delta of 1 since this is
         -- the first frame.
         lineOfSightModel.update(8, 3, 1)
+
+        -- Since a time delta cannot be calculated on the first frame, 1 is passed
+        -- in here as a placeholder.
+        lightingModel.update(1)
     end
 
     -- Render the tiles visible to the passed in camera.
