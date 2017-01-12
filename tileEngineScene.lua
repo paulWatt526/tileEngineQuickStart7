@@ -83,8 +83,14 @@ stateMachine.init = function()
     movingLightDirection = "right"
     movingLightXPos = 1.5
 
-    -- Set ambient lighting for state 0
-    lightingModel.setAmbientLight(1,1,1,0.75)
+    -- Set up for state 0
+    movingLightId = lightingModel.addLight({
+        row=8,
+        column=math.floor(movingLightXPos + 0.5),
+        r=1,g=1,b=0.7,intensity=0.75,radius=9
+    })
+    lightingModel.setUseTransitioners(true)
+    lightingModel.setAmbientLight(1,1,1,0.15)
 end
 stateMachine.update = function(deltaTime)
     local xDelta = MOVING_LIGHT_SPEED * deltaTime
@@ -116,17 +122,22 @@ stateMachine.nextState = function()
     end
 
     if stateMachine.curState == 0 then
-        lightingModel.removeLight(movingLightId)
-        movingLightId = nil
-        lightingModel.setUseTransitioners(false)
-        lightingModel.setAmbientLight(1,1,1,0.75)
+        movingLightId = lightingModel.addLight({
+            row=8,
+            column=math.floor(movingLightXPos + 0.5),
+            r=1,g=1,b=0.7,intensity=0.75,radius=9
+        })
+        lightingModel.setUseTransitioners(true)
+        lightingModel.setAmbientLight(1,1,1,0.15)
     end
 
     if stateMachine.curState == 1 then
+        lightingModel.removeLight(movingLightId)
+        movingLightId = nil
         topLightId = lightingModel.addLight({
             row=5,column=8,r=1,g=1,b=0.7,intensity=0.75,radius=9
         })
-        lightingModel.setAmbientLight(1,1,1,0.15)
+        lightingModel.setUseTransitioners(false)
     end
 
     if stateMachine.curState == 2 then
@@ -156,12 +167,7 @@ stateMachine.nextState = function()
     if stateMachine.curState == 5 then
         lightingModel.removeLight(leftLightId)
         leftLightId = nil
-        movingLightId = lightingModel.addLight({
-            row=8,
-            column=math.floor(movingLightXPos + 0.5),
-            r=1,g=1,b=0.7,intensity=0.75,radius=9
-        })
-        lightingModel.setUseTransitioners(true)
+        lightingModel.setAmbientLight(1,1,1,0.75)
     end
 end
 
